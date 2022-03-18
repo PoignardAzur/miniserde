@@ -164,13 +164,13 @@
 extern crate alloc;
 
 #[doc(hidden)]
-pub use mini_internal::*;
+pub use miniserde_derive_venial::*;
 
 // These derives were renamed from MiniTrait -> Trait with the release of Rust
 // 1.30.0. Keep exposing the old names for backward compatibility but remove in
 // the next major version of Miniserde.
 #[doc(hidden)]
-pub use mini_internal::{Deserialize as MiniDeserialize, Serialize as MiniSerialize};
+pub use miniserde_derive_venial::{Deserialize as MiniDeserialize, Serialize as MiniSerialize};
 
 // Not public API.
 #[doc(hidden)]
