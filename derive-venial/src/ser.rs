@@ -1,7 +1,4 @@
-use crate::{
-    attr,
-    bound::{create_derive_where_clause, get_inline_generic_args_struct},
-};
+use crate::attr;
 
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
@@ -49,12 +46,8 @@ fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, MyError> {
     );
 
     let impl_generics = &struct_decl.generic_params;
-    let inline_generics = get_inline_generic_args_struct(&struct_decl);
-    let bounded_where_clause = create_derive_where_clause(
-        &struct_decl.generic_params,
-        &struct_decl.where_clause,
-        quote!(miniserde::Serialize),
-    );
+    let inline_generics = struct_decl.get_inline_generic_args();
+    let bounded_where_clause = struct_decl.create_derive_where_clause(quote!(miniserde::Serialize));
 
     let fields = match &struct_decl.fields {
         StructFields::Unit => panic!("can't parse unit struct"),
@@ -79,7 +72,7 @@ fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, MyError> {
         .clone()
         .with_param(GenericParam::lifetime("__a"));
     let wrapper_impl_generics = &wrapper_decl.generic_params;
-    let wrapper_inline_generics = get_inline_generic_args_struct(&wrapper_decl);
+    let wrapper_inline_generics = wrapper_decl.get_inline_generic_args();
     let wrapper_where_clause = struct_decl.where_clause.clone();
 
     Ok(quote! {
