@@ -54,7 +54,7 @@ fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, MyError> {
     let bounded_where_clause = create_derive_where_clause(
         &struct_decl.generic_params,
         &struct_decl.where_clause,
-        quote!(miniserde::Serialize),
+        quote!(miniserde::Deserialize),
     );
 
     let fields = match &struct_decl.fields {

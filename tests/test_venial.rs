@@ -17,10 +17,7 @@ struct Example {
 }
 
 #[derive(PartialEq, Debug, Serialize, Deserialize)]
-struct Example2<
-    Foo: miniserde::Deserialize + miniserde::Serialize,
-    Bar: miniserde::Deserialize + miniserde::Serialize,
-> {
+struct Example2<Foo, Bar> {
     x: String,
     foo: Foo,
     bar: Bar,
