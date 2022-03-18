@@ -1,0 +1,5 @@
+error: duplicate rename attribute
+ --> tests/ui-venial/attr-duplicate.rs:8:5
+  |
+8 |     #[serde(rename = "B")]
+  |     ^^^^^^^^^^^^^^^^^^^^^^

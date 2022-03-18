@@ -6,19 +6,26 @@ use quote::quote;
 use venial::{parse_declaration, Declaration, Enum, GenericParam, Struct, StructFields};
 #[allow(unused)]
 use venial::{
-    Attribute, EnumDiscriminant, EnumVariant, GenericParams, NamedField, TupleField, TyExpr,
+    Attribute, EnumDiscriminant, EnumVariant, Error, GenericParams, NamedField, TupleField, TyExpr,
     VisMarker, WhereClause,
 };
 
-type MyError = ();
-
-pub fn derive(input: TokenStream) -> Result<TokenStream, MyError> {
+pub fn derive(input: TokenStream) -> Result<TokenStream, Error> {
     let type_decl = parse_declaration(input);
 
     let res = match &type_decl {
         Declaration::Struct(struct_decl) => derive_struct(struct_decl)?,
         Declaration::Enum(enum_decl) => derive_enum(enum_decl)?,
-        _ => panic!("can't parse type"),
+        Declaration::Union(_) => {
+            return Err(Error::new(
+                "currently only structs and enums are supported by this derive",
+            ))
+        }
+        _ => {
+            return Err(Error::new(
+                "currently only structs and enums are supported by this derive",
+            ))
+        }
     };
 
     #[cfg(FALSE)]
@@ -38,7 +45,7 @@ pub fn derive(input: TokenStream) -> Result<TokenStream, MyError> {
     Ok(res)
 }
 
-fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, MyError> {
+fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, Error> {
     let name_ident = &struct_decl.name;
 
     let dummy = Ident::new(
@@ -52,8 +59,16 @@ fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, MyError> {
         struct_decl.create_derive_where_clause(quote!(miniserde::Deserialize));
 
     let fields = match &struct_decl.fields {
-        StructFields::Unit => panic!("can't parse unit struct"),
-        StructFields::Tuple(_fields) => panic!("can't parse tuple struct"),
+        StructFields::Unit => {
+            return Err(Error::new(
+                "currently only structs with named fields are supported",
+            ))
+        }
+        StructFields::Tuple(_fields) => {
+            return Err(Error::new(
+                "currently only structs with named fields are supported",
+            ))
+        }
         StructFields::Named(fields) => fields,
     };
     let field_names = fields
@@ -68,7 +83,7 @@ fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, MyError> {
         .inner
         .iter()
         .map(|field| attr::name_of_field(&field.0))
-        .collect::<Result<Vec<_>, ()>>()?;
+        .collect::<Result<Vec<_>, Error>>()?;
 
     let wrapper_decl = struct_decl
         .clone()
@@ -141,9 +156,9 @@ fn derive_struct(struct_decl: &Struct) -> Result<TokenStream, MyError> {
     })
 }
 
-fn derive_enum(enum_decl: &Enum) -> Result<TokenStream, MyError> {
+fn derive_enum(enum_decl: &Enum) -> Result<TokenStream, Error> {
     if enum_decl.generic_params.is_some() {
-        panic!("Enums with generics are not supported");
+        return Err(Error::new("Enums with generics are not supported"));
     }
 
     let name_ident = &enum_decl.name;
@@ -158,15 +173,18 @@ fn derive_enum(enum_decl: &Enum) -> Result<TokenStream, MyError> {
         .iter()
         .map(|variant| match variant.0.contents {
             StructFields::Unit => Ok(&variant.0.name),
-            _ => panic!("Invalid variant: only simple enum variants without fields are supported"),
+            _ => Err(Error::new_at_tokens(
+                &variant.0,
+                "Invalid variant: only simple enum variants without fields are supported",
+            )),
         })
-        .collect::<Result<Vec<_>, MyError>>()?;
+        .collect::<Result<Vec<_>, Error>>()?;
     let variant_names = enum_decl
         .variants
         .inner
         .iter()
         .map(|variant| attr::name_of_variant(&variant.0))
-        .collect::<Result<Vec<_>, MyError>>()?;
+        .collect::<Result<Vec<_>, Error>>()?;
 
     Ok(quote! {
         #[allow(non_upper_case_globals)]
