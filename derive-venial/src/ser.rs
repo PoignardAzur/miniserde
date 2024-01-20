@@ -2,15 +2,11 @@ use crate::attr;
 
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
+use venial::Error;
 use venial::{parse_declaration, Declaration, Enum, GenericParam, Struct, StructFields};
-#[allow(unused)]
-use venial::{
-    Attribute, EnumDiscriminant, EnumVariant, Error, GenericParams, NamedField, TupleField, TyExpr,
-    VisMarker, WhereClause,
-};
 
 pub fn derive(input: TokenStream) -> Result<TokenStream, Error> {
-    let type_decl = parse_declaration(input);
+    let type_decl = parse_declaration(input).unwrap();
 
     let res = match &type_decl {
         Declaration::Struct(struct_decl) => derive_struct(struct_decl)?,

@@ -8,12 +8,10 @@ fn attr_rename(attributes: &[Attribute]) -> Result<Option<Literal>, Error> {
     let mut rename = None;
 
     for attribute in attributes {
-        match &attribute.child_tokens[0] {
-            TokenTree::Ident(ident) if ident == "serde" => (),
+        match &attribute.get_single_path_segment() {
+            Some(ident) if *ident == "serde" => (),
             _ => continue,
         }
-
-        let attribute_contents = &attribute._braces.stream();
 
         if rename.is_some() {
             return Err(Error::new_at_tokens(
@@ -22,11 +20,11 @@ fn attr_rename(attributes: &[Attribute]) -> Result<Option<Literal>, Error> {
             ));
         }
 
-        let list: Vec<_> = match attribute.child_tokens.get(1) {
-            Some(TokenTree::Group(group)) => group.stream().into_iter().collect(),
+        let list: Vec<_> = match &attribute.value {
+            venial::AttributeValue::Group(_, group) => group.clone(),
             _ => {
                 return Err(Error::new_at_tokens(
-                    &attribute_contents,
+                    &attribute.value,
                     "unsupported attribute",
                 ))
             }
@@ -39,7 +37,7 @@ fn attr_rename(attributes: &[Attribute]) -> Result<Option<Literal>, Error> {
             }
             _ => {
                 return Err(Error::new_at_tokens(
-                    &attribute_contents,
+                    &attribute.value,
                     "unsupported attribute",
                 ))
             }
@@ -48,7 +46,7 @@ fn attr_rename(attributes: &[Attribute]) -> Result<Option<Literal>, Error> {
             Some(TokenTree::Punct(punct)) if punct.as_char() == '=' => (),
             _ => {
                 return Err(Error::new_at_tokens(
-                    &attribute_contents,
+                    &attribute.value,
                     "unsupported attribute",
                 ))
             }
@@ -57,7 +55,7 @@ fn attr_rename(attributes: &[Attribute]) -> Result<Option<Literal>, Error> {
             Some(TokenTree::Literal(literal)) => literal,
             _ => {
                 return Err(Error::new_at_tokens(
-                    &attribute_contents,
+                    &attribute.value,
                     "unsupported attribute",
                 ))
             }
